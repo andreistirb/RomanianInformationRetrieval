@@ -75,4 +75,4 @@ fabric.properties
 
 
 # Covers proprietary files
-/indexLocation
+indexLocation/
