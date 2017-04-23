@@ -53,7 +53,7 @@ public class Main {
         final Path docDir = Paths.get(docsPath);
         if(!Files.isReadable(docDir)){
             System.out.println("Document directory " + docDir.toAbsolutePath() + " does not exist" +
-                    "or is not readable, please check the path");
+                    " or is not readable, please check the path");
             System.exit(1);
         }
 
@@ -63,7 +63,7 @@ public class Main {
         try(
                 InputStream fis = new FileInputStream("stopwords.txt");
                 InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));
-                BufferedReader br = new BufferedReader(isr);
+                BufferedReader br = new BufferedReader(isr)
                 ){
             lineStream = br.lines();
             for(Iterator<String> i = lineStream.iterator();i.hasNext();){
