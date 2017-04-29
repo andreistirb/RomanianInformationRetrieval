@@ -10,5 +10,6 @@
     <orderEntry type="library" name="lucene-analyzers-common-6.5.0" level="project" />
     <orderEntry type="library" name="lucene-core-6.5.0" level="project" />
     <orderEntry type="library" name="lucene-queryparser-6.5.0" level="project" />
+    <orderEntry type="library" name="icu4j-56.1" level="project" />
   </component>
 </module>

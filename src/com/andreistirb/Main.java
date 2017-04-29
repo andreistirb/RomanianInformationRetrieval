@@ -80,7 +80,7 @@ public class Main {
             System.out.println("Indexing to directory " + indexPath);
 
             Directory dir = FSDirectory.open(Paths.get(indexPath));
-            Analyzer analyzer = new RomanianAnalyzer(CharArraySet.unmodifiableSet(CharArraySet.copy(stopWords)));
+            Analyzer analyzer = new MyAnalyzer(CharArraySet.unmodifiableSet(CharArraySet.copy(stopWords)));
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
             System.out.println(create);
