@@ -11,5 +11,14 @@
     <orderEntry type="library" name="lucene-core-6.5.0" level="project" />
     <orderEntry type="library" name="lucene-queryparser-6.5.0" level="project" />
     <orderEntry type="library" name="icu4j-56.1" level="project" />
+    <orderEntry type="library" name="tika-core-1.14" level="project" />
+    <orderEntry type="library" name="tika-parsers-1.14" level="project" />
+    <orderEntry type="library" name="pdfbox-2.0.5" level="project" />
+    <orderEntry type="library" name="xmpbox-2.0.5" level="project" />
+    <orderEntry type="library" name="jempbox-1.8.13" level="project" />
+    <orderEntry type="library" name="commons-io-2.5" level="project" />
+    <orderEntry type="library" name="commons-logging-1.2" level="project" />
+    <orderEntry type="library" name="fontbox-2.0.5" level="project" />
+    <orderEntry type="library" name="commons-lang3-3.5" level="project" />
   </component>
 </module>

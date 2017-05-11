@@ -8,14 +8,16 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.pdf.PDFParser;
+import org.apache.tika.sax.BodyContentHandler;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
 import java.util.Date;
 
 /**
@@ -48,14 +50,35 @@ public class IndexFiles {
     static void indexDoc(IndexWriter writer, Path file, long lastModified) throws IOException {
         try(InputStream stream = Files.newInputStream(file)){
             Document doc = new Document();
+            BodyContentHandler handler = new BodyContentHandler(-1);
+            Metadata metadata = new Metadata();
+            ParseContext pcontext = new ParseContext();
+            PDFParser pdfparser;
 
             Field pathField = new StringField("path", file.toString(), Field.Store.YES);
             doc.add(pathField);
 
             doc.add(new LongPoint("modified", lastModified));
 
-            doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
+            if(file.toString().endsWith(".pdf")){
+                try {
 
+                    //parsing the document using PDF parser
+                    pdfparser = new PDFParser();
+                    pdfparser.parse(stream, handler, metadata, pcontext);
+
+                }
+                catch(Exception e){
+                    System.out.println(e.getMessage());
+                }
+
+                //getting the content of the document
+                //System.out.println("Contents of the PDF :" + handler.toString());
+                doc.add(new TextField("contents", unescapeJava(handler.toString()), Field.Store.YES));
+            }
+            else {
+                doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream))));
+            }
             if(writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE){
                 System.out.println("adding " + file);
                 writer.addDocument(doc);

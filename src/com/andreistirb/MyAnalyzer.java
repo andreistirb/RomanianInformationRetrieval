@@ -3,11 +3,10 @@ package com.andreistirb;
 import com.ibm.icu.text.Transliterator;
 import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
-import org.apache.lucene.analysis.icu.ICUNormalizer2Filter;
 import org.apache.lucene.analysis.icu.ICUTransformFilter;
 import org.apache.lucene.analysis.ro.RomanianAnalyzer;
 import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.analysis.StopFilter;
+import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
@@ -111,7 +110,7 @@ public class MyAnalyzer extends StopwordAnalyzerBase {
         result = new ICUTransformFilter(result, Transliterator.getInstance("Latin-ASCII"));
         if(!stemExclusionSet.isEmpty())
             result = new SetKeywordMarkerFilter(result, stemExclusionSet);
-        //result = new SnowballFilter(result, new RomanianStemmer());
+        result = new SnowballFilter(result, new RomanianStemmer());
         return new TokenStreamComponents(source, result);
     }
 

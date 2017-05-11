@@ -2,11 +2,14 @@ package com.andreistirb;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.StopFilter;
+import org.apache.lucene.analysis.WordlistLoader;
 import org.apache.lucene.analysis.ro.RomanianAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -29,7 +32,7 @@ public class Main {
                 + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
                 + "This indexes the documents in DOCS_PATH, creating a Lucene index"
                 + "in INDEX_PATH that can be searched with SearchFiles";
-        Set<String> stopWords = new HashSet<>();
+        List<String> stopWords = new ArrayList<>();
         String indexPath = "index";
         String docsPath = null;
         boolean create = true;
@@ -59,20 +62,29 @@ public class Main {
 
         //extract stop words from file
         Stream<String> lineStream;
+        CharArraySet stopWordsSet = null;
 
         try(
                 InputStream fis = new FileInputStream("stopwords.txt");
-                InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));
+                InputStreamReader isr = new InputStreamReader(fis, Charset.defaultCharset());
                 BufferedReader br = new BufferedReader(isr)
                 ){
             lineStream = br.lines();
             for(Iterator<String> i = lineStream.iterator();i.hasNext();){
-                stopWords.add(i.next());
+                String stopword = i.next();
+                //System.out.println(stopword);
+                stopWords.add(stopword);
             }
+            stopWordsSet = WordlistLoader.getWordSet(isr);
         }
         catch (Exception e){
             e.printStackTrace();
         }
+
+        for(int i = 0; i<stopWords.size(); i++)
+            System.out.println(stopWords.get(i));
+
+        Set wordstop = StopFilter.makeStopSet(stopWords);
 
         Date start = new Date();
 
@@ -80,7 +92,7 @@ public class Main {
             System.out.println("Indexing to directory " + indexPath);
 
             Directory dir = FSDirectory.open(Paths.get(indexPath));
-            Analyzer analyzer = new MyAnalyzer(CharArraySet.unmodifiableSet(CharArraySet.copy(stopWords)));
+            Analyzer analyzer = new MyAnalyzer(/*CharArraySet.unmodifiableSet(CharArraySet.copy(wordstop))*/stopWordsSet);
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
             System.out.println(create);

@@ -1,4 +1,5 @@
 a
+si
 abia
 acea
 aceasta
@@ -415,6 +416,8 @@ zice
 înainte
 înaintea
 încotro
+si
+incotro
 încât
 încît
 între
