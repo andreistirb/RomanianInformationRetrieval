@@ -62,7 +62,6 @@ public class Main {
 
         //extract stop words from file
         Stream<String> lineStream;
-        CharArraySet stopWordsSet = null;
 
         try(
                 InputStream fis = new FileInputStream("stopwords.txt");
@@ -72,17 +71,12 @@ public class Main {
             lineStream = br.lines();
             for(Iterator<String> i = lineStream.iterator();i.hasNext();){
                 String stopword = i.next();
-                //System.out.println(stopword);
                 stopWords.add(stopword);
             }
-            stopWordsSet = WordlistLoader.getWordSet(isr);
         }
         catch (Exception e){
             e.printStackTrace();
         }
-
-        for(int i = 0; i<stopWords.size(); i++)
-            System.out.println(stopWords.get(i));
 
         Set wordstop = StopFilter.makeStopSet(stopWords);
 
@@ -92,7 +86,7 @@ public class Main {
             System.out.println("Indexing to directory " + indexPath);
 
             Directory dir = FSDirectory.open(Paths.get(indexPath));
-            Analyzer analyzer = new MyAnalyzer(/*CharArraySet.unmodifiableSet(CharArraySet.copy(wordstop))*/stopWordsSet);
+            Analyzer analyzer = new MyAnalyzer(CharArraySet.unmodifiableSet(CharArraySet.copy(wordstop)));//stopWordsSet);
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
             System.out.println(create);
