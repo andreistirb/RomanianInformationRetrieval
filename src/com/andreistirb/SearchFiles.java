@@ -3,27 +3,35 @@ package com.andreistirb;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.ro.RomanianAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.Buffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Created by andrei on 23.04.2017.
  */
 public class SearchFiles {
+
+    private static boolean filtering = false;
 
     private SearchFiles() {
     }
@@ -46,6 +54,9 @@ public class SearchFiles {
         boolean raw = false;
         String queryString = null;
         int hitsPerPage = 10;
+        String[] fileTypes = null;
+        Date fileDate = null;
+        Set<String> mFilesSet = new HashSet<>();
 
         for (int i = 0; i < args.length; i++) {
             if ("-index".equals(args[i])) {
@@ -72,6 +83,44 @@ public class SearchFiles {
                     System.exit(1);
                 }
                 i++;
+            } else if("-filter".equals(args[i])){
+                filtering = true;
+            }
+        }
+
+        if(filtering) {
+            //read the filters file
+            try (
+                    InputStream fis = new FileInputStream("filters.txt");
+                    InputStreamReader isr = new InputStreamReader(fis, Charset.defaultCharset());
+                    BufferedReader br = new BufferedReader(isr);
+            ) {
+                //read first line which contains the types of the files to be searched
+                Stream<String> lines;
+                lines = br.lines();
+
+                DateFormat dateFormat = new SimpleDateFormat("YYYY/MM/DD");
+                for (Iterator<String> i = lines.iterator(); i.hasNext(); ) {
+                    String line;
+                    line = i.next();
+                    if (line.startsWith("#")) { //ignore comments in filters file
+                    } else if (line.startsWith("files: ")) {
+                        line = line.replaceFirst("files: ", "");
+                        fileTypes = line.split(",");
+                        mFilesSet.add("pdf");
+                        mFilesSet.add("txt");
+                        mFilesSet.add("epub");
+                        for (int j = 0; j < fileTypes.length; j++) {
+                            mFilesSet.remove(fileTypes[j]); //remove from the hashset those file types parsed from the user file
+                        }
+                    } else if (line.startsWith("date:")) {
+                        line = line.replaceFirst("date: ", "");
+                        fileDate = dateFormat.parse(line);
+                        System.out.println(fileDate.toString());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -80,14 +129,18 @@ public class SearchFiles {
         Analyzer analyzer = new MyAnalyzer();
 
         BufferedReader in = null;
+
         if (queries != null) {
             in = Files.newBufferedReader(Paths.get(queries), StandardCharsets.UTF_8);
         } else {
             in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         }
+
         QueryParser parser = new QueryParser(field, analyzer);
+        BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
+        BooleanQuery booleanQuery = booleanQueryBuilder.build();
         while (true) {
-            if (queries == null && queryString == null) {                        // prompt the user
+            if (queries == null && queryString == null) {// prompt the user
                 System.out.println("Enter query: ");
             }
 
@@ -102,8 +155,28 @@ public class SearchFiles {
                 break;
             }
 
-            Query query = parser.parse(line);
-            System.out.println("Searching for: " + query.toString(field));
+            Query query;
+
+            if(filtering) {
+                for (Iterator<String> iterator = mFilesSet.iterator(); iterator.hasNext(); ) {
+                    String mString = iterator.next();
+                    Query mQuery = new TermQuery(new Term("filetype", mString));
+                    booleanQueryBuilder.add(mQuery, BooleanClause.Occur.MUST_NOT);
+                }
+                query = parser.parse(line);
+                //Date currentDate = new Date();
+                //Query dateQuery = IntPoint.newRangeQuery("modified", ((int) fileDate.getTime()),(int)currentDate.getTime());
+                booleanQueryBuilder.add(query, BooleanClause.Occur.MUST);
+                //booleanQueryBuilder.add(dateQuery, BooleanClause.Occur.MUST);
+
+                booleanQuery = booleanQueryBuilder.build();
+                System.out.println("Query: " + booleanQuery.toString());
+                System.out.println("Searching for: " + query.toString(field));
+
+            }
+            else {
+                query = parser.parse(line);
+            }
 
             if (repeat > 0) {                           // repeat & time as benchmark
                 Date start = new Date();
@@ -114,13 +187,18 @@ public class SearchFiles {
                 System.out.println("Time: " + (end.getTime() - start.getTime()) + "ms");
             }
 
-            doPagingSearch(in, searcher, query, hitsPerPage, raw, queries == null && queryString == null);
-
+            if(filtering){
+                doPagingSearch(in, searcher, booleanQuery, hitsPerPage, raw, queries == null && queryString == null);
+            }
+            else {
+                doPagingSearch(in, searcher, query, hitsPerPage, raw, queries == null && queryString == null);
+            }
             if (queryString != null) {
                 break;
             }
         }
         reader.close();
+
     }
 
     public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, Query query,

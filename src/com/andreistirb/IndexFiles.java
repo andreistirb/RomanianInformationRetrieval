@@ -68,26 +68,25 @@ public class IndexFiles {
                 catch(Exception e){
                     System.out.println(e.getMessage());
                 }
-
                 //getting the content of the document
-                //System.out.println("Contents of the PDF :" + handler.toString());
                 doc.add(new TextField("contents", unescapeJava(handler.toString()), Field.Store.YES));
+                doc.add(new StringField("filetype","pdf", Field.Store.YES));
             }
             else if(file.toString().endsWith(".epub")){
                 try{
                     //parsing the document using Epub Parser
                     epubParser = new EpubParser();
                     epubParser.parse(stream, handler, metadata, pcontext);
-
                 }
                 catch(Exception e){
                     System.out.println(e.getMessage());
                 }
                 doc.add(new TextField("contents", unescapeJava(handler.toString()), Field.Store.YES));
+                doc.add(new StringField("filetype","epub", Field.Store.YES));
             }
             else{
                 doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream))));
-
+                doc.add(new StringField("filetype","txt", Field.Store.YES));
             }
             if(writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE){
                 System.out.println("adding " + file);
