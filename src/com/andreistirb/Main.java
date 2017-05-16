@@ -3,13 +3,10 @@ package com.andreistirb;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.StopFilter;
-import org.apache.lucene.analysis.WordlistLoader;
-import org.apache.lucene.analysis.ro.RomanianAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

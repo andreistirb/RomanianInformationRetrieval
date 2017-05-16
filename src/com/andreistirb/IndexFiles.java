@@ -1,20 +1,16 @@
 package com.andreistirb;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.parser.epub.*;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
@@ -54,6 +50,7 @@ public class IndexFiles {
             Metadata metadata = new Metadata();
             ParseContext pcontext = new ParseContext();
             PDFParser pdfparser;
+            EpubParser epubParser;
 
             Field pathField = new StringField("path", file.toString(), Field.Store.YES);
             doc.add(pathField);
@@ -76,8 +73,21 @@ public class IndexFiles {
                 //System.out.println("Contents of the PDF :" + handler.toString());
                 doc.add(new TextField("contents", unescapeJava(handler.toString()), Field.Store.YES));
             }
-            else {
+            else if(file.toString().endsWith(".epub")){
+                try{
+                    //parsing the document using Epub Parser
+                    epubParser = new EpubParser();
+                    epubParser.parse(stream, handler, metadata, pcontext);
+
+                }
+                catch(Exception e){
+                    System.out.println(e.getMessage());
+                }
+                doc.add(new TextField("contents", unescapeJava(handler.toString()), Field.Store.YES));
+            }
+            else{
                 doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream))));
+
             }
             if(writer.getConfig().getOpenMode() == IndexWriterConfig.OpenMode.CREATE){
                 System.out.println("adding " + file);
