@@ -14,6 +14,9 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -22,7 +25,7 @@ import java.util.Date;
 public class IndexFiles {
 
     private IndexFiles(){}
-
+    private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     static void indexDocs(final IndexWriter writer, Path path) throws IOException{
         if(Files.isDirectory(path)){
@@ -51,11 +54,15 @@ public class IndexFiles {
             ParseContext pcontext = new ParseContext();
             PDFParser pdfparser;
             EpubParser epubParser;
+            Date modifiedDate = new Date(lastModified);
 
             Field pathField = new StringField("path", file.toString(), Field.Store.YES);
             doc.add(pathField);
 
-            doc.add(new LongPoint("modified", lastModified));
+            //doc.add(new LongPoint("modified", lastModified));
+            String modifiedDateString = dateFormat.format(modifiedDate);
+            System.out.println(modifiedDateString);
+            doc.add(new TextField("modified",modifiedDateString, Field.Store.YES));
 
             if(file.toString().endsWith(".pdf")){
                 try {

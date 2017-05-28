@@ -1,3 +1,4 @@
-#list the types of query files, sepparated by commas: txt,pdf,epub
-files: pdf,epub
-#date of creation (YYYY/MM/DD)
+#list the types of query files, separated by commas: txt,pdf,epub
+files: txt
+#date of creation (YYYY-MM-DD)
+date: 2016-01-17

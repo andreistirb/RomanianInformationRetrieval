@@ -11,6 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.*;
 import java.nio.Buffer;
@@ -57,6 +58,8 @@ public class SearchFiles {
         String[] fileTypes = null;
         Date fileDate = null;
         Set<String> mFilesSet = new HashSet<>();
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String fileDateString = null;
 
         for (int i = 0; i < args.length; i++) {
             if ("-index".equals(args[i])) {
@@ -99,7 +102,7 @@ public class SearchFiles {
                 Stream<String> lines;
                 lines = br.lines();
 
-                DateFormat dateFormat = new SimpleDateFormat("YYYY/MM/DD");
+
                 for (Iterator<String> i = lines.iterator(); i.hasNext(); ) {
                     String line;
                     line = i.next();
@@ -116,7 +119,9 @@ public class SearchFiles {
                     } else if (line.startsWith("date:")) {
                         line = line.replaceFirst("date: ", "");
                         fileDate = dateFormat.parse(line);
-                        System.out.println(fileDate.toString());
+                        fileDateString = line;
+                        //System.out.println(fileDateString);
+                        //System.out.println("Date: " + fileDate.toString());
                     }
                 }
             } catch (Exception e) {
@@ -164,20 +169,24 @@ public class SearchFiles {
                     booleanQueryBuilder.add(mQuery, BooleanClause.Occur.MUST_NOT);
                 }
                 query = parser.parse(line);
-                //Date currentDate = new Date();
+
+                Date currentDate = new Date();
+                BytesRef lowerTerm = new BytesRef(fileDateString);
+                BytesRef upperTerm = new BytesRef(dateFormat.format(currentDate));
+                //System.out.println(dateFormat.format(currentDate));
+                TermRangeQuery dateQuery = TermRangeQuery.newStringRange("modified",fileDateString,dateFormat.format(currentDate),false,false);
                 //Query dateQuery = IntPoint.newRangeQuery("modified", ((int) fileDate.getTime()),(int)currentDate.getTime());
+                booleanQueryBuilder.add(dateQuery, BooleanClause.Occur.MUST);
                 booleanQueryBuilder.add(query, BooleanClause.Occur.MUST);
                 //booleanQueryBuilder.add(dateQuery, BooleanClause.Occur.MUST);
 
                 booleanQuery = booleanQueryBuilder.build();
-                System.out.println("Query: " + booleanQuery.toString());
-                System.out.println("Searching for: " + query.toString(field));
-
+                //System.out.println("Query: " + booleanQuery.toString());
+                //System.out.println("Searching for: " + query.toString(field));
             }
             else {
                 query = parser.parse(line);
             }
-
             if (repeat > 0) {                           // repeat & time as benchmark
                 Date start = new Date();
                 for (int i = 0; i < repeat; i++) {
@@ -215,8 +224,8 @@ public class SearchFiles {
 
         while (true) {
             if (end > hits.length) {
-                System.out.println("Only results 1 - " + hits.length + " of " + numTotalHits + " total matching documents collected.");
-                System.out.println("Collect more (y/n) ?");
+                //System.out.println("Only results 1 - " + hits.length + " of " + numTotalHits + " total matching documents collected.");
+                //System.out.println("Collect more (y/n) ?");
                 String line = in.readLine();
                 if (line.length() == 0 || line.charAt(0) == 'n') {
                     break;
